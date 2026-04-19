@@ -1,0 +1,17 @@
+# Env files (GLOBAL protection 🔐)
+.env
+*/.env
+
+# Node modules
+node_modules/
+*/node_modules/
+
+# Build files
+dist/
+build/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
