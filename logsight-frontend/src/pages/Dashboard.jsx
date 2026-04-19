@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import Sidebar from "../components/Sidebar";
 import Stats from "../components/Stats";
 import LogCard from "../components/LogCard";
-import LogsTable from "../components/logs/LogsTable";
+import LogsTable from "../components/Logs/LogsTable";
 import AIInsights from "../components/AIInsights";
 import Header from "../components/layout/Header";
 import Panel from "../components/ui/Panel";
