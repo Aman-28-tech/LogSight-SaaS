@@ -61,18 +61,18 @@ npm run dev
 📂 Project Structure
 
 logsight-app/
-├── logsight-backend/      # Express API, MongoDB models, Socket logic
-│   ├── src/
-│   │   ├── config/        # Database & OAuth configs
-│   │   ├── models/        # Mongoose schemas
-│   │   ├── routes/        # API endpoints
-│   │   └── server.js      # Entry point
-├── logsight-frontend/     # React Application (Vite)
-│   ├── src/
-│   │   ├── components/    # Reusable UI elements
-│   │   ├── hooks/         # Custom React hooks (Data fetching)
-│   │   ├── utils/         # Helper functions
-│   │   └── App.jsx        # Main application logic
-└── .gitignore             # Root gitignore
+├── logsight-backend/ # Express API, MongoDB models, Socket logic
+│ ├── src/
+│ │ ├── config/ # Database configs
+│ │ ├── models/ # Mongoose schemas
+│ │ ├── routes/ # API endpoints
+│ │ └── server.js # Entry point
+├── logsight-frontend/ # React Application (Vite)
+│ ├── src/
+│ │ ├── components/ # Reusable UI elements
+│ │ ├── hooks/ # Custom React hooks
+│ │ ├── utils/ # Helper functions
+│ │ └── App.jsx # Main app logic
+└── .gitignore # Root gitignore
 
 Developed with ❤️ by Amandeep
