@@ -2,7 +2,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "../components/layout/Header";
 import AuthForm from "../components/AuthForm";
-import { loginUser, registerUser, socialLoginUser } from "../services/api";
+import OTPForm from "../components/OTPForm";
+import ForgotPasswordForm from "../components/ForgotPasswordForm";
+import ResetPasswordForm from "../components/ResetPasswordForm";
+import { loginUser, registerUser, socialLoginUser, verifyOTP, resendOTP, forgotPassword, resetPassword } from "../services/api";
 import { signInWithPopup } from "firebase/auth";
 import { auth, githubProvider } from "../config/firebase";
 
@@ -13,8 +16,13 @@ export default function AuthPage({ setToken }) {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
 
-  const handleAuth = async () => {
+  const handleAuth = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!email || !password) {
       return setErrorMsg("Please fill all fields");
     }
@@ -22,13 +30,14 @@ export default function AuthPage({ setToken }) {
     try {
       setLoading(true);
       setErrorMsg("");
+      setSuccessMsg("");
 
       const res = isLogin
         ? await loginUser({ email, password })
         : await registerUser({ email, password });
 
       if (isLogin) {
-        const nextToken = res.data?.data?.token;
+        const nextToken = res.data?.data?.token || res.data?.token;
 
         if (!res.data?.success || !nextToken) {
           throw new Error("Invalid login response");
@@ -37,19 +46,106 @@ export default function AuthPage({ setToken }) {
         localStorage.setItem("token", nextToken);
         setToken(nextToken);
       } else {
-        const nextToken = res.data?.data?.token || res.data?.token;
-
-        if (!res.data?.success || !nextToken) {
+        // Registration success, but need verification
+        if (res.data?.success) {
+          setIsVerifying(true);
+          setSuccessMsg("Account created! Please check your email for the code.");
+        } else {
           throw new Error("Invalid register response");
         }
-
-        localStorage.setItem("token", nextToken);
-        setToken(nextToken);
       }
     } catch (err) {
       const apiMessage = err.response?.data?.message;
+      
+      // If user is not verified during login, switch to verification mode
+      if (err.response?.status === 403 && apiMessage?.toLowerCase().includes("verify")) {
+        setIsVerifying(true);
+        setErrorMsg("");
+        return;
+      }
+
       const fallbackMessage = isLogin ? "Login failed ❌" : "Auth failed ❌";
       setErrorMsg(apiMessage || err.message || fallbackMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (otp) => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+      setSuccessMsg("");
+
+      const res = await verifyOTP({ email, otp });
+      const token = res.data?.data?.token || res.data?.token;
+
+      if (res.data?.success && token) {
+        localStorage.setItem("token", token);
+        setToken(token);
+      } else {
+        throw new Error("Verification failed");
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Verification failed ❌");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+      setSuccessMsg("");
+
+      await resendOTP({ email });
+      setSuccessMsg("A new verification code has been sent!");
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Failed to resend OTP ❌");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+      setSuccessMsg("");
+
+      const res = await forgotPassword({ email });
+      if (res.data?.success) {
+        setIsForgotMode(false);
+        setIsResetMode(true);
+        setSuccessMsg("We sent a reset code to your email if an account exists.");
+      } else {
+        throw new Error("Failed to send reset code.");
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Failed to send reset code ❌");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (otp, newPassword) => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+      setSuccessMsg("");
+
+      const res = await resetPassword({ email, otp, newPassword });
+      if (res.data?.success) {
+        setIsResetMode(false);
+        setIsLogin(true); // Back to login screen
+        setSuccessMsg("Password reset successfully! You can now log in.");
+        setPassword(""); // Clear the password field
+      } else {
+        throw new Error("Failed to reset password.");
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Failed to reset password ❌");
     } finally {
       setLoading(false);
     }
@@ -106,22 +202,70 @@ export default function AuthPage({ setToken }) {
         <Header
           showActions={false}
           eyebrow="Access"
-          title={isLogin ? "Welcome back" : "Create your account"}
-          subtitle="Sign in to inspect live logs, track service health, and review incoming events from one place."
+          title={isForgotMode ? "Reset Password" : isResetMode ? "Set New Password" : isLogin ? "Welcome back" : "Create your account"}
+          subtitle={isForgotMode || isResetMode ? "Enter the details to recover your account securely." : "Sign in to inspect live logs, track service health, and review incoming events from one place."}
         />
 
-      <AuthForm
-        isLogin={isLogin}
-        setIsLogin={setIsLogin}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        handleAuth={handleAuth}
-        handleGithubAuth={handleGithubAuth}
-        loading={loading}
-        errorMsg={errorMsg}
-      />
+      {isForgotMode ? (
+        <ForgotPasswordForm
+          email={email}
+          setEmail={setEmail}
+          handleForgotPassword={handleForgotPassword}
+          onBackToLogin={() => {
+            setIsForgotMode(false);
+            setErrorMsg("");
+            setSuccessMsg("");
+          }}
+          loading={loading}
+          errorMsg={errorMsg}
+          successMsg={successMsg}
+        />
+      ) : isResetMode ? (
+        <ResetPasswordForm
+          email={email}
+          handleResetPassword={handleResetPassword}
+          onBackToLogin={() => {
+            setIsResetMode(false);
+            setErrorMsg("");
+            setSuccessMsg("");
+          }}
+          onResend={handleForgotPassword}
+          loading={loading}
+          errorMsg={errorMsg}
+          successMsg={successMsg}
+        />
+      ) : isVerifying ? (
+        <OTPForm
+          email={email}
+          onVerify={handleVerifyOTP}
+          onResend={handleResendOTP}
+          loading={loading}
+          errorMsg={errorMsg}
+          successMsg={successMsg}
+        />
+      ) : (
+        <AuthForm
+          isLogin={isLogin}
+          setIsLogin={(val) => {
+            setIsLogin(val);
+            setErrorMsg("");
+            setSuccessMsg("");
+          }}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          handleAuth={handleAuth}
+          handleGithubAuth={handleGithubAuth}
+          loading={loading}
+          errorMsg={errorMsg}
+          onForgotPassword={() => {
+            setIsForgotMode(true);
+            setErrorMsg("");
+            setSuccessMsg("");
+          }}
+        />
+      )}
       </div>
     </div>
   );

@@ -19,3 +19,13 @@ export const loginLimiter = rateLimit({
     message: "Too many login attempts, try later",
   },
 });
+
+// ✉️ EMAIL RATE LIMITER (PREVENT SPAMMING AND NODEMAILER BAN)
+export const emailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3, // only 3 emails per 15 minutes
+  message: {
+    success: false,
+    message: "Too many email requests, please wait 15 minutes",
+  },
+});
