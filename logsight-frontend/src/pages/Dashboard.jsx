@@ -50,6 +50,7 @@ export default function Dashboard({
   dateRange,
   setDateRange,
   anomalyPulse,
+  onPricingClick,
 }) {
   const [selectedLog, setSelectedLog] = useState(null);
 
@@ -116,7 +117,7 @@ export default function Dashboard({
         )}
 
         <div className="relative z-10">
-          <Sidebar />
+          <Sidebar onPricingClick={onPricingClick} />
           <div className="w-full lg:pl-64">
         <Header
           showActions

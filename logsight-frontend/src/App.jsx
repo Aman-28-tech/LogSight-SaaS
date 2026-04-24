@@ -1,8 +1,10 @@
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import ToastViewport from "./components/ui/ToastViewport";
+import PricingPage from "./pages/PricingPage";
 import useAuthToken from "./hooks/useAuthToken";
 import useDashboardData from "./hooks/useDashboardData";
+import { useState } from "react";
 
 function App() {
   const { token, setToken } = useAuthToken();
@@ -25,6 +27,8 @@ function App() {
     anomalyPulse,
   } = useDashboardData(token);
 
+  const [currentView, setCurrentView] = useState('dashboard');
+
   const logout = () => setToken("");
 
   if (!token) {
@@ -39,23 +43,28 @@ function App() {
   return (
     <>
       <ToastViewport toasts={toasts} onDismiss={removeToast} />
-      <Dashboard
-        logs={logs}
-        filteredLogs={filteredLogs}
-        filter={filter}
-        setFilter={setFilter}
-        aiInsight={aiInsight}
-        aiError={aiError}
-        loadingLogs={loadingLogs}
-        fetchAI={fetchAI}
-        loadingAI={loadingAI}
-        logout={logout}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        anomalyPulse={anomalyPulse}
-      />
+      {currentView === 'pricing' ? (
+        <PricingPage onBack={() => setCurrentView('dashboard')} />
+      ) : (
+        <Dashboard
+          logs={logs}
+          filteredLogs={filteredLogs}
+          filter={filter}
+          setFilter={setFilter}
+          aiInsight={aiInsight}
+          aiError={aiError}
+          loadingLogs={loadingLogs}
+          fetchAI={fetchAI}
+          loadingAI={loadingAI}
+          logout={logout}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          anomalyPulse={anomalyPulse}
+          onPricingClick={() => setCurrentView('pricing')}
+        />
+      )}
     </>
   );
 }

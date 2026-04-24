@@ -2,7 +2,7 @@ import { useState } from "react";
 import Panel from "./ui/Panel";
 import { createLog } from "../services/api";
 
-export default function Sidebar() {
+export default function Sidebar({ onPricingClick }) {
   const [active, setActive] = useState("dashboard");
   const [isSimulating, setIsSimulating] = useState(false);
 
@@ -94,7 +94,13 @@ export default function Sidebar() {
           </div>
         </div>
 
-        <div className="mt-8 mb-4">
+        <div className="mt-8 mb-4 flex flex-col gap-3">
+          <button
+            onClick={onPricingClick}
+            className="w-full rounded-xl py-3 px-4 text-xs font-bold uppercase tracking-widest text-white shadow-xl transition-all border border-blue-500/50 bg-blue-600/20 hover:bg-blue-600/40 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+          >
+            🚀 Upgrade to Pro
+          </button>
           <button
             onClick={handleSimulate}
             disabled={isSimulating}
